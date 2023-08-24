@@ -125,6 +125,8 @@ export default class Demo extends Phaser.Scene {
       this.personas[name] = this.spawnSprite(name, this.character_names[name][0], this.character_names[name][1])
     }
 
+    
+
   }
 
   update(time: number, delta: number): void {
