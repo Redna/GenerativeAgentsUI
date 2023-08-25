@@ -1,10 +1,10 @@
 
-interface MoveDTO {
+export interface MoveDTO {
     row: number,
     col: number
 }
 
-interface AgentDTO {
+export interface AgentDTO {
     name: string,
     description: number,
     location: string
@@ -13,7 +13,8 @@ interface AgentDTO {
     movement: MoveDTO
 }
 
-interface RoundUpdateDTO {
+export interface RoundUpdateDTO {
     agents: AgentDTO[]  
     round: number
+    time: string
 }

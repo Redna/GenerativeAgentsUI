@@ -1,4 +1,5 @@
 import { io, Socket } from "socket.io-client"
+import { RoundUpdateDTO } from "./DTOs";
 
 interface ServerToClientEvents {
     update: (roundUpdate: RoundUpdateDTO) => void;

@@ -4,7 +4,7 @@ export default class Demo extends Phaser.Scene {
 
   private character_names: { [key: string]: number[] } = {
     "Klaus_Mueller": [127, 46],
-    "Maria_Lopez": [73, 14],
+    "Maria_Lopez": [123, 57],
     "Tom_Moreno": [73, 14],
   }
 
