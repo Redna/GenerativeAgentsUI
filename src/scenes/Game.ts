@@ -1,6 +1,10 @@
 import Phaser from 'phaser';
-import Character from './Character';
-export default class Demo extends Phaser.Scene {
+import Character from './character';
+import SimulationConnector from '../connector/simulationConnector';
+import { MOVEMENT_SPEED, toPixelPosition } from '../globals';
+import { RoundUpdateDTO } from '../connector/dtos';
+
+export default class GameScene extends Phaser.Scene {
 
   private character_names: { [key: string]: number[] } = {
     "Klaus_Mueller": [127, 46],
@@ -12,11 +16,14 @@ export default class Demo extends Phaser.Scene {
 
   private map: Phaser.Tilemaps.Tilemap | undefined
 
-  private personas: any = {};
+  private characters: any = {};
   private player: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody | undefined;
 
-  constructor() {
+  private connector: SimulationConnector;
+
+  constructor(connector: SimulationConnector) {
     super('GameScene');
+    this.connector = connector
   }
 
   preload() {
@@ -122,7 +129,7 @@ export default class Demo extends Phaser.Scene {
     camera.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
 
     for (let name in this.character_names) {
-      this.personas[name] = this.spawnSprite(name, this.character_names[name][0], this.character_names[name][1])
+      this.characters[name] = this.spawnSprite(name, this.character_names[name][0], this.character_names[name][1])
     }
 
     
@@ -130,6 +137,7 @@ export default class Demo extends Phaser.Scene {
   }
 
   update(time: number, delta: number): void {
+    this.processUpdate(time, delta);
     const camera_speed = 400;
     // Stop any previous movement from the last frame
 
@@ -150,21 +158,43 @@ export default class Demo extends Phaser.Scene {
       player.body.setVelocityY(camera_speed);
     }
 
+    // iterate through characters and update their position 
+    for (let name in this.characters) {
+      const character = this.characters[name]
+      character.update()
+    }
   }
 
-  spawnSprite(name: string, cellX: number, cellY: number): Character {
-    let posX = cellX * this.tile_width + this.tile_width / 2;
-    let posY = cellY * this.tile_width + this.tile_width;
+  private processUpdate(time: number, delta: number): void {
+    const queue = this.connector.updateQueue;
+    if (queue.size() > 0) {
+      let update: RoundUpdateDTO = this.connector.updateQueue.dequeue()!;
+      console.log(update)
+      for (let agent of update.agents) {
+        if (agent.name in this.characters) {
+          const character = this.characters[agent.name]
+          character.movement = agent.movement
+          character.setEmoji(agent.emoji)
+          character.description = agent.description
+          character.location = agent.location
+          character.activity = agent.activity
+        }
+      }
+    }
+  }  
+
+  private spawnSprite(name: string, cellX: number, cellY: number): Character {
+    let position = toPixelPosition(cellX, cellY);
 
     let sprite = this.physics.add
-      .sprite(posX, posY, name, "down")
+      .sprite(position.x, position.y, name, "down")
       .setSize(30, 40)
       .setOffset(0, 0);
 
     sprite.displayWidth = 40;
     sprite.scaleY = sprite.scaleX;
 
-    let bubble = this.add.image(posX + 60, posY - 40, 'speech_bubble').setDepth(3);
+    let bubble = this.add.image(position.x + 60, position.y - 40, 'speech_bubble').setDepth(3);
     bubble.displayWidth = 110;
     bubble.displayHeight = 50;
 
@@ -174,12 +204,15 @@ export default class Demo extends Phaser.Scene {
       padding: { x: 8, y: 8 }
     }
 
-    this.add.text(posX + 10, posY - 67, this.getInitials(name) + ": ", textStyle).setDepth(3);
-    let emoji = this.add.text(posX + 65, posY - 67,"🦁", textStyle).setDepth(3);
+    
+    let emoji = this.add.text(position.x + 5, position.y - 67,this.getInitials(name) + ":🦁", textStyle).setDepth(3);
 
     this.createSpriteAnimation(name);
 
-    return new Character(name, sprite, bubble, emoji);
+    const character = new Character(name, sprite, bubble, emoji, { col: cellX, row: cellY }, "description", "", "");
+
+    this.connector.spawn(character)
+    return character;
   }
   
   private getInitials(name: string): string {

@@ -6,7 +6,7 @@ export interface MoveDTO {
 
 export interface AgentDTO {
     name: string,
-    description: number,
+    description: string,
     location: string
     emoji: string
     activity: string
