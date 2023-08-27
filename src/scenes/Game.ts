@@ -1,8 +1,88 @@
 import Phaser from 'phaser';
-import Character from './character';
+import Character, { Bubble } from './character';
 import SimulationConnector from '../connector/simulationConnector';
-import { MOVEMENT_SPEED, toPixelPosition } from '../globals';
+import { MOVEMENT_SPEED, UPDATE_INTERVAL_MS, toPixelPosition } from '../globals';
 import { RoundUpdateDTO } from '../connector/dtos';
+
+class SimulationUpdateEngine {
+  private updates: RoundUpdateDTO[];
+  private pointer: number;
+  private updateInterval: number = 6_000;
+  private interval: ReturnType<typeof setInterval> | undefined;
+  private characters: { [key: string]: Character };
+  private connector: SimulationConnector;
+
+  constructor() {
+    this.updates = [];
+    this.pointer = 0;
+    this.characters = {};
+
+    this.connector = new SimulationConnector()
+    this.connector.onUpdate((update: RoundUpdateDTO) => {
+      this.add(update);
+    });
+  }
+
+  addCharacters(characters: { [key: string]: Character } ): void {
+    for (let name in characters) {
+      this.addCharacter(characters[name])
+    }
+  }
+
+  addCharacter(character: Character): void {
+    this.characters[character.name] = character;
+    this.connector.spawn(character)
+  }
+
+  add(update: RoundUpdateDTO): void {
+    this.updates.push(update);
+  }
+
+  hasNext(): boolean {
+    return this.pointer < this.updates.length;
+  }
+
+  setPointer(pointer: number): void {
+    if(pointer < this.updates.length) {
+      this.pointer = pointer;
+    }
+  }
+
+  getPointer(): number {
+    return this.pointer;
+  }
+
+  start(): void {
+    this.interval = setInterval(() => {
+      if(this.hasNext()) {
+        this.applyUpdate();
+        this.pointer++;
+      }
+    }, this.updateInterval);
+  }
+
+  pause(): void {
+    if(this.interval) {
+      clearInterval(this.interval);
+    }
+  } 
+
+  private applyUpdate(): void {
+    const update = this.updates[this.pointer];
+
+    for (let agent of update.agents) {
+      if (agent.name in this.characters) {
+        const character = this.characters[agent.name]
+        character.movement = agent.movement
+        character.setEmoji(agent.emoji)
+        character.description = agent.description
+        character.location = agent.location
+        character.activity = agent.activity
+      }
+    }
+  }
+}
+
 
 export default class GameScene extends Phaser.Scene {
 
@@ -12,18 +92,17 @@ export default class GameScene extends Phaser.Scene {
     "Tom_Moreno": [73, 14],
   }
 
-  private tile_width = 32
-
   private map: Phaser.Tilemaps.Tilemap | undefined
 
   private characters: any = {};
   private player: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody | undefined;
 
-  private connector: SimulationConnector;
 
-  constructor(connector: SimulationConnector) {
+  private simulationUpdateEngine: SimulationUpdateEngine;
+
+  constructor() {
     super('GameScene');
-    this.connector = connector
+    this.simulationUpdateEngine = new SimulationUpdateEngine()
   }
 
   preload() {
@@ -132,12 +211,10 @@ export default class GameScene extends Phaser.Scene {
       this.characters[name] = this.spawnSprite(name, this.character_names[name][0], this.character_names[name][1])
     }
 
-    
-
+    this.simulationUpdateEngine.start();
   }
 
   update(time: number, delta: number): void {
-    this.processUpdate(time, delta);
     const camera_speed = 400;
     // Stop any previous movement from the last frame
 
@@ -165,24 +242,6 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  private processUpdate(time: number, delta: number): void {
-    const queue = this.connector.updateQueue;
-    if (queue.size() > 0) {
-      let update: RoundUpdateDTO = this.connector.updateQueue.dequeue()!;
-      console.log(update)
-      for (let agent of update.agents) {
-        if (agent.name in this.characters) {
-          const character = this.characters[agent.name]
-          character.movement = agent.movement
-          character.setEmoji(agent.emoji)
-          character.description = agent.description
-          character.location = agent.location
-          character.activity = agent.activity
-        }
-      }
-    }
-  }  
-
   private spawnSprite(name: string, cellX: number, cellY: number): Character {
     let position = toPixelPosition(cellX, cellY);
 
@@ -204,14 +263,12 @@ export default class GameScene extends Phaser.Scene {
       padding: { x: 8, y: 8 }
     }
 
-    
-    let emoji = this.add.text(position.x + 5, position.y - 67,this.getInitials(name) + ":🦁", textStyle).setDepth(3);
+    let emoji = this.add.text(position.x + 5, position.y - 67, this.getInitials(name) + ":🦁", textStyle).setDepth(3);
 
     this.createSpriteAnimation(name);
 
-    const character = new Character(name, sprite, bubble, emoji, { col: cellX, row: cellY }, "description", "", "");
-
-    this.connector.spawn(character)
+    const character = new Character(name, sprite, new Bubble(this.getInitials(name), bubble, emoji), { col: cellX, row: cellY }, "description", "", "");
+    this.simulationUpdateEngine.addCharacter(character);
     return character;
   }
   

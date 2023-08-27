@@ -1,5 +1,6 @@
 
 // export TILESIZE constant with 32
+export const UPDATE_INTERVAL_MS = 8_000;
 export const TILESIZE = 32;
 export const MOVEMENT_SPEED=2;
 

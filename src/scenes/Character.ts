@@ -1,13 +1,41 @@
 import { AgentDTO } from "../connector/dtos";
 import { MOVEMENT_SPEED, toPixelPosition, toTilePosition } from "../globals";
 
+export class Bubble {
+    private bubble: Phaser.GameObjects.Image;
+    private emoji: Phaser.GameObjects.Text;
+    initials: string;
+
+    constructor(initials: string, bubble: Phaser.GameObjects.Image, emoji: Phaser.GameObjects.Text) {
+        this.bubble = bubble
+        this.emoji = emoji
+        this.initials = initials
+    }
+
+    setEmoji(emoji: string): void {
+        this.emoji.text = this.initials + ":" + emoji
+    }
+
+    updateX(step: number): void {
+        this.bubble.x += step
+        this.emoji.x += step
+    }
+
+    updateY(step: number): void {
+        this.bubble.y += step
+        this.emoji.y += step
+    }
+
+    getEmoji(): string {
+        return this.emoji.text
+    }
+}
 
 export default class Character {
 
     name: string;
     sprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
-    bubble: Phaser.GameObjects.Image;
-    emoji: Phaser.GameObjects.Text;
+    bubble: Bubble;
     movement: { col: number, row: number };
     description: string;
     location: string;
@@ -16,28 +44,26 @@ export default class Character {
     // reformat constructor arguments to match DTO
     constructor(name: string, 
                 sprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody, 
-                bubble: Phaser.GameObjects.Image, 
-                emoji: Phaser.GameObjects.Text,
+                bubble: Bubble,
                 movement: { col: number, row: number },
                 description: string, 
                 location: string, 
                 activity: string) {
-        this.name = name
-        this.sprite = sprite
-        this.bubble = bubble
-        this.emoji = emoji
-        this.movement = movement
-        this.description = description
-        this.location = location
-        this.activity = activity
+        this.name = name;
+        this.sprite = sprite;
+        this.bubble = bubble;
+        this.movement = movement;
+        this.description = description;
+        this.location = location;
+        this.activity = activity;
     }
 
     position(): { col: number, row: number } {
         return toTilePosition(this.sprite.x, this.sprite.y)
     }
 
-    setEmoji(): void {
-        
+    setEmoji(emoji: string): void {
+        this.bubble.setEmoji(emoji)
     }
 
     update(): void {
@@ -46,23 +72,19 @@ export default class Character {
         if(this.sprite.x < target.x) {
             this.sprite.anims.play(this.name + "-right-walk", true);
             this.sprite.x += MOVEMENT_SPEED;
-            this.bubble.x += MOVEMENT_SPEED;
-            this.emoji.x += MOVEMENT_SPEED;
+            this.bubble.updateX(MOVEMENT_SPEED);
         } else if(this.sprite.x > target.x) {
             this.sprite.anims.play(this.name + "-left-walk", true);
             this.sprite.x -= MOVEMENT_SPEED;
-            this.bubble.x -= MOVEMENT_SPEED;
-            this.emoji.x -= MOVEMENT_SPEED;
+            this.bubble.updateX(-MOVEMENT_SPEED);
         } else if(this.sprite.y < target.y) {
             this.sprite.anims.play(this.name + "-down-walk", true);
             this.sprite.y += MOVEMENT_SPEED;
-            this.bubble.y += MOVEMENT_SPEED;
-            this.emoji.y += MOVEMENT_SPEED;
+            this.bubble.updateY(MOVEMENT_SPEED);
         } else if(this.sprite.y > target.y) {
             this.sprite.anims.play(this.name + "-up-walk", true);
             this.sprite.y -= MOVEMENT_SPEED;
-            this.bubble.y -= MOVEMENT_SPEED;
-            this.emoji.y -= MOVEMENT_SPEED;
+            this.bubble.updateY(-MOVEMENT_SPEED);
         } else {
             this.sprite.anims.stop();
         }
@@ -73,7 +95,7 @@ export default class Character {
             name: this.name,
             description: this.description,
             location: this.location,
-            emoji: this.emoji.text,
+            emoji: this.bubble.getEmoji(),
             activity: this.activity,
             movement: {
                 col: this.position().col,
