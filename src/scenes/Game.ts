@@ -7,7 +7,7 @@ import { RoundUpdateDTO } from '../connector/dtos';
 class SimulationUpdateEngine {
   private updates: RoundUpdateDTO[];
   private pointer: number;
-  private updateInterval: number = 6_000;
+  private updateInterval: number = 1_200;
   private interval: ReturnType<typeof setInterval> | undefined;
   private characters: { [key: string]: Character };
   private connector: SimulationConnector;
@@ -88,7 +88,7 @@ export default class GameScene extends Phaser.Scene {
 
   private character_names: { [key: string]: number[] } = {
     "Klaus_Mueller": [127, 46],
-    "Maria_Lopez": [123, 57],
+    "Maria_Lopez": [127, 54],
     "Tom_Moreno": [73, 14],
   }
 

@@ -5,15 +5,18 @@ export class Bubble {
     private bubble: Phaser.GameObjects.Image;
     private emoji: Phaser.GameObjects.Text;
     initials: string;
+    plain_emoji: string;
 
     constructor(initials: string, bubble: Phaser.GameObjects.Image, emoji: Phaser.GameObjects.Text) {
         this.bubble = bubble
         this.emoji = emoji
+        this.plain_emoji = emoji.text.split(":")[1].trim()
         this.initials = initials
     }
 
     setEmoji(emoji: string): void {
         this.emoji.text = this.initials + ":" + emoji
+        this.plain_emoji = emoji
     }
 
     updateX(step: number): void {
@@ -27,7 +30,7 @@ export class Bubble {
     }
 
     getEmoji(): string {
-        return this.emoji.text
+        return this.plain_emoji
     }
 }
 
