@@ -17,7 +17,7 @@ export default class SimulationConnector {
 
     // constructor
     constructor() {
-        this.socket = io("http://localhost:8080");
+        this.socket = io("http://localhost:8000");
         this.socket.emit("watch")
     }
 
@@ -28,7 +28,7 @@ export default class SimulationConnector {
     onUpdate(callback: (roundUpdate: RoundUpdateDTO) => void) {
         this.socket.on("update", (roundUpdate: RoundUpdateDTO) => {
             // Seems like a bug of socket.io that the payload is not properly parsed...
-
+            console.log(roundUpdate)
             if (typeof roundUpdate === "string") {
                 callback(JSON.parse(roundUpdate));
             }

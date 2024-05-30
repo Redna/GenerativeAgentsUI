@@ -11,11 +11,13 @@ class SimulationUpdateEngine {
   private interval: ReturnType<typeof setInterval> | undefined;
   private characters: { [key: string]: Character };
   private connector: SimulationConnector;
+  private gameScene: GameScene;
 
-  constructor() {
+  constructor(GameScene: GameScene) {
     this.updates = [];
     this.pointer = 0;
     this.characters = {};
+    this.gameScene = GameScene;
 
     this.connector = new SimulationConnector()
     this.connector.onUpdate((update: RoundUpdateDTO) => {
@@ -31,7 +33,6 @@ class SimulationUpdateEngine {
 
   addCharacter(character: Character): void {
     this.characters[character.name] = character;
-    this.connector.spawn(character)
   }
 
   add(update: RoundUpdateDTO): void {
@@ -71,13 +72,19 @@ class SimulationUpdateEngine {
     const update = this.updates[this.pointer];
 
     for (let agent of update.agents) {
-      if (agent.name in this.characters) {
-        const character = this.characters[agent.name]
+      console.log(agent)
+      let agent_name = agent.name.replace(" ", "_")
+      if (agent_name in this.characters) {
+
+        const character = this.characters[agent_name]
         character.movement = agent.movement
         character.setEmoji(agent.emoji)
         character.description = agent.description
         character.location = agent.location
         character.activity = agent.activity
+      }
+      else {
+        this.gameScene.spawnSprite(agent_name, agent.movement.col, agent.movement.row)
       }
     }
   }
@@ -87,10 +94,11 @@ class SimulationUpdateEngine {
 export default class GameScene extends Phaser.Scene {
 
   private character_names: { [key: string]: number[] } = {
-    "Klaus_Mueller": [127, 46],
+    /*"Klaus_Mueller": [127, 46],
     "Maria_Lopez": [127, 54],
-    "Tom_Moreno": [73, 14],
+    "Tom_Moreno": [73, 14],*/
   }
+
 
   private map: Phaser.Tilemaps.Tilemap | undefined
 
@@ -102,7 +110,7 @@ export default class GameScene extends Phaser.Scene {
 
   constructor() {
     super('GameScene');
-    this.simulationUpdateEngine = new SimulationUpdateEngine()
+    this.simulationUpdateEngine = new SimulationUpdateEngine(this)
   }
 
   preload() {
@@ -127,10 +135,13 @@ export default class GameScene extends Phaser.Scene {
     this.load.atlas("atlas", "./assets/characters/Yuriko_Yamamoto.png",
       "./assets/characters/atlas.json");
 
-    for (let character_name in this.character_names) {
+
+    let character_files = ["Klaus_Mueller", "Maria_Lopez", "Tom_Moreno", "Yuriko_Yamamoto",
+                           "John_Lin", "Giorgio_Rossi"]
+    character_files.forEach(character_name => {
       const character_path = "./assets/characters/" + character_name + ".png";
       this.load.atlas(character_name, character_path, "./assets/characters/atlas.json")
-    }
+    });
 
     this.load.image('speech_bubble', "./assets/speech_bubble/v3.png");
   }
@@ -208,7 +219,7 @@ export default class GameScene extends Phaser.Scene {
     camera.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
 
     for (let name in this.character_names) {
-      this.characters[name] = this.spawnSprite(name, this.character_names[name][0], this.character_names[name][1])
+      this.spawnSprite(name, this.character_names[name][0], this.character_names[name][1])
     }
 
     this.simulationUpdateEngine.start();
@@ -242,7 +253,7 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  private spawnSprite(name: string, cellX: number, cellY: number): Character {
+  public spawnSprite(name: string, cellX: number, cellY: number): Character {
     let position = toPixelPosition(cellX, cellY);
 
     let sprite = this.physics.add
@@ -269,6 +280,8 @@ export default class GameScene extends Phaser.Scene {
 
     const character = new Character(name, sprite, new Bubble(this.getInitials(name), bubble, emoji), { col: cellX, row: cellY }, "description", "", "");
     this.simulationUpdateEngine.addCharacter(character);
+    this.character_names[name] = [cellX, cellY];
+    this.characters[name] = character;
     return character;
   }
   
