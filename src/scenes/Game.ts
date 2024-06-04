@@ -114,7 +114,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.tilemapTiledJSON("map", "./assets/the_ville/visuals/the_ville_jan7.json");
+    this.load.tilemapTiledJSON("map", "./assets/half_ville/half_ville.tmj");
     this.load.image("blocks_1", "assets/the_ville/visuals/map_assets/blocks/blocks_1.png");
     this.load.image("walls", "assets/the_ville/visuals/map_assets/v1/Room_Builder_32x32.png");
     this.load.image("interiors_pt1", "assets/the_ville/visuals/map_assets/v1/interiors_pt1.png");
@@ -137,7 +137,7 @@ export default class GameScene extends Phaser.Scene {
 
 
     let character_files = ["Klaus_Mueller", "Maria_Lopez", "Tom_Moreno", "Yuriko_Yamamoto",
-                           "John_Lin", "Giorgio_Rossi"]
+                           "John_Lin", "Giorgio_Rossi", "Isabella_Rodriguez"]
     character_files.forEach(character_name => {
       const character_path = "./assets/characters/" + character_name + ".png";
       this.load.atlas(character_name, character_path, "./assets/characters/atlas.json")
