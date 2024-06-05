@@ -17,7 +17,7 @@ export default class SimulationConnector {
 
     // constructor
     constructor() {
-        this.socket = io("http://localhost:8000");
+        this.socket = io("http://localhost:8000", { reconnectionDelay: 240000, reconnectionAttempts: 10 });
         this.socket.emit("watch")
     }
 
