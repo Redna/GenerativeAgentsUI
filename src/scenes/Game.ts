@@ -136,7 +136,7 @@ export default class GameScene extends Phaser.Scene {
       "./assets/characters/atlas.json");
 
 
-    let character_files = ["Klaus_Mueller", "Maria_Lopez", "Tom_Moreno", "Yuriko_Yamamoto",
+    let character_files = ["Abigail_Chen", "Yuriko_Yamamoto", "Tamara_Taylor", "Yuriko_Yamamoto",
                            "John_Lin", "Giorgio_Rossi", "Isabella_Rodriguez"]
     character_files.forEach(character_name => {
       const character_path = "./assets/characters/" + character_name + ".png";
